@@ -1,7 +1,7 @@
 # Python-utility for Fast Modbus from Wiren Board
 
 ## Overview
-This repository provides a set of Python scripts designed for efficient communication and event configuration in Modbus environments. These tools allow you to scan Modbus devices, read and configure events, and perform read/write operations on Modbus registers with optimized performance.
+This repository provides a set of Python scripts for efficient interaction and event configuration in Modbus networks. These tools enable working with devices supporting Fast Modbus: scanning, reading, and configuring events. Additionally, it allows for reading and writing standard Modbus registers using the Fast Modbus protocol and serial number addressing.
 
 ## Installation
 1. Clone the repository:
