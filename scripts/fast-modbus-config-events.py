@@ -3,8 +3,16 @@ import struct
 import serial
 import time
 
-# CRC16 calculation
 def calculate_crc(data):
+    """
+    Calculate the CRC16 checksum for the given data.
+
+    Args:
+        data (bytes): The data for which to calculate the checksum.
+
+    Returns:
+        int: The calculated CRC16 checksum.
+    """
     crc = 0xFFFF
     for pos in data:
         crc ^= pos
@@ -16,28 +24,54 @@ def calculate_crc(data):
                 crc >>= 1
     return crc
 
-# Function to send command to the device
 def send_command(serial_port, command, debug=False):
+    """
+    Send a command to the Modbus device, appending a CRC16 checksum.
+
+    Args:
+        serial_port (serial.Serial): The serial port connection.
+        command (list of int): The command bytes to send.
+        debug (bool): If True, print debug information.
+    """
     crc = calculate_crc(command)
     command += struct.pack('<H', crc)
     if debug:
         print(f"[debug] Command generated: {' '.join(f'0x{byte:02X}' for byte in command)}")
     serial_port.write(command)
 
-# Initialize serial port
 def init_serial(device, baudrate):
-    return serial.Serial(port=device, baudrate=baudrate, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1)
+    """
+    Initialize a serial connection.
 
-# Formulate the event configuration command for multiple register ranges
+    Args:
+        device (str): The serial device path (e.g., /dev/ttyUSB0).
+        baudrate (int): The baud rate for the connection.
+
+    Returns:
+        serial.Serial: The initialized serial connection.
+    """
+    return serial.Serial(port=device, baudrate=baudrate, bytesize=serial.EIGHTBITS,
+                         parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1)
+
 def formulate_command(slave_id, config, debug=False):
-    command = [slave_id, 0x46, 0x18]  # Start with slave id, command, sub-command
+    """
+    Create a command to configure event notifications for multiple register ranges.
+
+    Args:
+        slave_id (int): The slave ID of the Modbus device.
+        config (str): The configuration string specifying ranges.
+        debug (bool): If True, print debug information.
+
+    Returns:
+        list: The generated command bytes.
+    """
+    command = [slave_id, 0x46, 0x18]
     data = []
 
     for cfg in config.split(','):
         reg_type, address, count, priority = cfg.split(':')
         address, count, priority = int(address), int(count), int(priority)
 
-        # Assign type byte based on register type
         reg_type_byte = {
             "coil": 0x01,
             "discrete": 0x02,
@@ -48,22 +82,29 @@ def formulate_command(slave_id, config, debug=False):
         if reg_type_byte is None:
             raise ValueError(f"Unknown register type: {reg_type}")
 
-        # Adding the register type, address (big endian), count (in u16)
         data.append(reg_type_byte)
-        data += list(struct.pack('>H', address))  # Address in big endian
-        data.append(count)  # Count of u16 registers
-        data += [priority] * count  # Priority for each u16 register
+        data += list(struct.pack('>H', address))
+        data.append(count)
+        data += [priority] * count
 
         if debug:
             print(f"[debug] Range: {reg_type} Address: {address} Count: {count} Priority: {priority}")
 
-    # Length of data
     command.append(len(data))
     command += data
     return command
 
-# Parse the response from the device
 def parse_response(response, debug=False):
+    """
+    Parse the response from the Modbus device.
+
+    Args:
+        response (bytes): The raw response data.
+        debug (bool): If True, print debug information.
+
+    Returns:
+        bytes: The parsed mask data from the response, or None if invalid.
+    """
     response = response.lstrip(b'\xFF')
     if debug:
         print(f"RAW Response (before filtering): {response}")
@@ -75,8 +116,15 @@ def parse_response(response, debug=False):
     mask_data = response[4:4+length]
     return mask_data
 
-# Print human-readable register settings
 def print_settings(config, mask_data, slave_id):
+    """
+    Display the event settings in a human-readable format.
+
+    Args:
+        config (str): The configuration string.
+        mask_data (bytes): The mask data from the device response.
+        slave_id (int): The Modbus device slave ID.
+    """
     byte_index = 0
     print(f"Device: {slave_id}")
     for cfg in config.split(','):
@@ -96,8 +144,16 @@ def print_settings(config, mask_data, slave_id):
             if (i + 1) % 8 == 0:
                 byte_index += 1
 
-# Configure events for multiple register ranges
 def configure_events(serial_port, slave_id, config, debug=False):
+    """
+    Configure event settings for multiple register ranges on a Modbus device.
+
+    Args:
+        serial_port (serial.Serial): The serial port connection.
+        slave_id (int): The slave ID of the Modbus device.
+        config (str): The configuration string specifying ranges.
+        debug (bool): If True, print debug information.
+    """
     for cfg in config.split(','):
         command = formulate_command(slave_id, cfg, debug)
         send_command(serial_port, command, debug)
@@ -113,8 +169,13 @@ def configure_events(serial_port, slave_id, config, debug=False):
         else:
             print("[error] No valid response received")
 
-# Main function
 def main():
+    """
+    Main entry point for configuring Modbus event notifications.
+
+    Parses command-line arguments, initializes the serial connection,
+    and configures the event settings based on the provided configuration string.
+    """
     parser = argparse.ArgumentParser(description="Modbus Event Configuration Tool for multiple u16 register ranges")
     parser.add_argument('--device', required=True, help="Serial device (e.g., /dev/ttyUSB0)")
     parser.add_argument('--baud', type=int, default=9600, help="Baud rate, default is 9600")
