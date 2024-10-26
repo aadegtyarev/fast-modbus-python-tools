@@ -4,6 +4,7 @@
 This repository provides a set of Python scripts for efficient interaction and event configuration in Modbus networks. These tools enable working with devices supporting Fast Modbus: scanning, reading, and configuring events. Additionally, it allows for reading and writing standard Modbus registers using the Fast Modbus protocol and serial number addressing.
 
 ## Installation
+These tools require Python 3.8 or higher.
 1. Clone the repository:
    ```bash
    git clone https://github.com/your-username/fast-modbus-python-tools.git
@@ -11,7 +12,6 @@ This repository provides a set of Python scripts for efficient interaction and e
 2. Install required dependencies:
    ```bash
    pip install -r requirements.txt
-   ```
 
 ## Tool Descriptions
 
