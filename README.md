@@ -76,4 +76,4 @@ These tools allow interaction with devices supporting Fast Modbus: scanning, rea
 
 ## Contributing
 
-Contributions are welcome! Feel free to submit pull requests to improve functionality or documentation.
+Initial code generated with assistance from OpenAI's ChatGPT. Contributions and improvements are welcome! Feel free to submit pull requests to improve functionality or documentation.
