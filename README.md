@@ -1,103 +1,79 @@
-# Python-utility for Fast Modbus from Wiren Board
+# Python Scripts for Fast Modbus
 
-## Overview
-This repository provides a set of Python scripts for efficient interaction and event configuration in Modbus networks. These tools enable working with devices supporting Fast Modbus: scanning, reading, and configuring events. Additionally, it allows for reading and writing standard Modbus registers using the Fast Modbus protocol and serial number addressing.
+These tools allow interaction with devices supporting Fast Modbus: scanning, reading, and configuring events. Additionally, they enable reading and writing standard Modbus registers using the Fast Modbus protocol and addressing by serial number.
 
-## Installation
-These tools require Python 3.8 or higher.
-1. Clone the repository:
+## Script Overview
+
+1. **fast-modbus-client.py**  
+   Allows reading and writing of arbitrary registers. Specify the device's serial number, Modbus command, and register details as arguments.
+
+   ### Parameters:
+   - `-d, --device`: TTY serial device path (e.g., `/dev/ttyUSB0`).
+   - `-b, --baud`: Baud rate, default is `9600`.
+   - `-s, --serial`: Device serial number (decimal or hexadecimal format).
+   - `-c, --command`: Modbus command (decimal or hexadecimal).
+   - `-r, --register`: Register number to read/write (decimal or hexadecimal).
+   - `-n, --count`: Number of registers to read (default `1`).
+   - `-w, --write`: Values to write (for write operations, decimal or hexadecimal).
+   - `--debug`: Enables debug output.
+   - `--decimal-output`: Displays register values in decimal format.
+
+   ### Usage Examples:
+   - **Reading Registers**:
+     ```bash
+     python fast-modbus-client.py -d /dev/ttyUSB0 -b 9600 -s 12345 -c 3 -r 200 -n 5
+     ```
+   - **Writing to Registers**:
+     ```bash
+     python fast-modbus-client.py -d /dev/ttyUSB0 -b 9600 -s 12345 -c 16 -r 200 -w 100 200 300 --decimal-output
+     ```
+
+2. **fast-modbus-scanner.py**  
+   Scans the Modbus network to identify connected devices. Retrieves device information, including model, using Fast Modbus commands.
+
+   ### Parameters:
+   - `-d, --device`: TTY serial device path (e.g., `/dev/ttyUSB0`).
+   - `-b, --baud`: Baud rate, default is `9600`.
+   - `--command`: Scan command (`0x46` or `0x60`, default is `0x46`).
+   - `--debug`: Enables debug output.
+
+   ### Usage Example:
    ```bash
-   git clone https://github.com/your-username/fast-modbus-python-tools.git
+   python fast-modbus-scanner.py -d /dev/ttyUSB0 -b 9600 --command 0x46
    ```
-2. Install required dependencies:
+
+3. **fast-modbus-events.py**  
+   Reads event data from a specified device, supporting detailed flag and length configuration for each event read.
+
+   ### Parameters:
+   - `-d, --device`: TTY serial device path (e.g., `/dev/ttyUSB0`).
+   - `-b, --baud`: Baud rate, default is `9600`.
+   - `--min_slave_id`: Minimum slave ID to start responding, default is `1`.
+   - `--max_data_length`: Maximum length of event data, default is `100`.
+   - `--slave_id`: Slave ID of the device from which the last packet was received.
+   - `--flag`: Flag confirming the previous packet received.
+   - `--debug`: Enables debug output.
+
+   ### Usage Example:
    ```bash
-   pip install -r requirements.txt
+   python fast-modbus-events.py -d /dev/ttyUSB0 -b 9600 --min_slave_id 1 --max_data_length 50 --slave_id 10 --flag 1 --debug
+   ```
 
-## Tool Descriptions
+4. **fast-modbus-config-events.py**  
+   Configures event settings for u16 registers on Modbus devices. Allows for multiple register types (e.g., discrete, input) and priority settings.
 
-### General Modbus Client
-The `fast-modbus-client.py` script allows read and write access to Modbus registers. It supports:
-- Reading one or multiple registers.
-- Writing data to registers.
-- Displaying register values in either decimal or hexadecimal format.
+   ### Parameters:
+   - `--device`: TTY serial device path (e.g., `/dev/ttyUSB0`).
+   - `--baud`: Baud rate, default is `9600`.
+   - `--slave_id`: Modbus device slave ID.
+   - `--config`: Configuration string specifying register ranges (e.g., `input:60:2:1,discrete:0:8:1`).
+   - `--debug`: Enables debug output.
 
-#### Arguments:
-- `--device`: Specifies the serial device (e.g., `/dev/ttyUSB0`).
-- `--baud`: Baud rate for Modbus communication. Default is 9600.
-- `--slave_id`: Modbus ID of the target device.
-- `--read`: Range of registers to read (format: `start:end`).
-- `--write`: Write a value to a register (format: `address:value`).
-- `--output`: Format for output, either `decimal` or `hex`.
-- `--debug`: Enables debug output for troubleshooting.
+   ### Usage Example:
+   ```bash
+   python fast-modbus-config-events.py --device /dev/ttyUSB0 --baud 9600 --slave_id 5 --config "input:60:2:1,discrete:0:8:1" --debug
+   ```
 
-To see all arguments, use:
-```bash
-python fast-modbus-client.py --help
-```
+## Contributing
 
-**Example Usage**:
-```bash
-python fast-modbus-client.py --device /dev/ttyACM0 --baud 9600 --slave_id 126 --read 1:10 --output hex
-```
-
-### Event Configuration Tool
-The `fast-modbus-config-events.py` script configures event notifications for Modbus registers, enabling and disabling event notifications for the following types:
-- `coil`, `discrete`, `holding`, and `input` registers.
-- Setting priorities for event notifications to help manage traffic on the Modbus network.
-
-#### Arguments:
-- `--device`: Specifies the serial device (e.g., `/dev/ttyUSB0`).
-- `--baud`: Baud rate for Modbus communication. Default is 9600.
-- `--slave_id`: Modbus ID of the target device.
-- `--config`: Configuration string (format: `register_type:address:count:priority`), supports multiple configurations separated by commas.
-- `--debug`: Enables debug output for troubleshooting.
-
-To see all arguments, use:
-```bash
-python fast-modbus-config-events.py --help
-```
-
-**Example Usage**:
-```bash
-python fast-modbus-config-events.py --device /dev/ttyACM0 --baud 9600 --slave_id 126 --config "discrete:0:2:1,holding:5:2:2" --debug
-```
-
-### Event Data Reader
-The `fast-modbus-events.py` script fetches and parses event data from Modbus devices to provide structured insights into register changes. It’s particularly useful for monitoring and debugging event-driven updates from Modbus registers.
-
-#### Arguments:
-- `--device`: Specifies the serial device (e.g., `/dev/ttyUSB0`).
-- `--baud`: Baud rate for Modbus communication. Default is 9600.
-- `--flag`: Event confirmation flag, used to manage event processing.
-- `--debug`: Enables debug output for troubleshooting.
-
-To see all arguments, use:
-```bash
-python fast-modbus-events.py --help
-```
-
-**Example Usage**:
-```bash
-python fast-modbus-events.py --device /dev/ttyACM0 --baud 9600 --flag 0x00 --debug
-```
-
-### Device Scanner
-The `fast-modbus-scanner.py` script scans the Modbus network for active devices, detecting and displaying device IDs. It includes configuration options for various baud rates and provides detailed debugging output.
-
-#### Arguments:
-- `--device`: Specifies the serial device (e.g., `/dev/ttyUSB0`).
-- `--baud`: Baud rate for Modbus communication. Default is 9600.
-- `--debug`: Enables debug output for troubleshooting.
-
-To see all arguments, use:
-```bash
-python fast-modbus-scanner.py --help
-```
-
-**Example Usage**:
-```bash
-python fast-modbus-scanner.py --device /dev/ttyACM0 --baud 9600 --debug
-```
-
-## Contribution
-We welcome community contributions to improve these tools! If you have ideas or fixes, please create a pull request with a description of your changes. Before submitting, make sure the code follows the repository's style and is thoroughly tested.
+Initial code generated with assistance from OpenAI's ChatGPT. Contributions and improvements are welcome! Feel free to submit pull requests to improve functionality or documentation.
