@@ -4,6 +4,7 @@
 These tools allow interaction with devices supporting Fast Modbus: scanning, reading, and configuring events. Additionally, they enable reading and writing standard Modbus registers using the Fast Modbus protocol and addressing by serial number.
 ![image](https://github.com/user-attachments/assets/3224c23f-6aa8-4f89-988a-cdeafebde028)
 
+There is also a library for working with Fast Modbus https://github.com/aadegtyarev/fast-modbus-python-library
 ## Script Overview
 
 1. **fast-modbus-client.py**  
